@@ -7,10 +7,10 @@ Supervised and unsupervised learning made easy!
 Austin Nguyen (Jun 1, 2020)  
 
 
-Because code was uncomplete and splited in few parts so I putt all code in one file (main-original.py), 
-and add needed modules and missing functions to load and display image (main-original.py) and it seems it works.
+Because code was uncomplete and splited in few parts so I put all code in one file (`main-original.py`), 
+and add needed modules and missing functions (to load and display image) and it seems it works.
 
-Next I created version `main.py` with some modifications
+Next I created version `main.py` with some modifications.
 
 I added two modifications:
 
