@@ -59,3 +59,14 @@ pip install sklearn
 pip install kdtree
 ```
 
+---
+
+Original Image
+
+
+![](https://github.com/furas/AutoDraw/raw/main/original-image-1a.png)
+
+AutoDraw + GIMP using small brush (3px)
+
+![](https://github.com/furas/AutoDraw/raw/main/autodraw-image-1a.png)
+
