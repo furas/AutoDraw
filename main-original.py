@@ -17,7 +17,14 @@ code completion:
     Bartlomiej "furas" Burek (https://blog.furas.pl)
 
     date: 2021.05.04
+
+# pip install opencv-python
+# pip install numpy
+# pip install PyAutoGUI
+# pip install sklearn
+# pip install kdtree
 """
+
 
 import cv2
 import numpy as np

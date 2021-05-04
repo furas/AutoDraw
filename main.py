@@ -39,13 +39,13 @@ Tested:
     - computer with two monitors
     - Linux Mint 20.1 (MATE)
     - Python 3.8.x
-"""
 
 # pip install opencv-python
 # pip install numpy
 # pip install PyAutoGUI
 # pip install sklearn
 # pip install kdtree
+"""
 
 import cv2
 import numpy as np
