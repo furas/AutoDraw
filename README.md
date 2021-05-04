@@ -27,6 +27,7 @@ This color is in `BGR` (Blue, Green, Red), not `RGB` (Red, Green, Blue), (becaus
 
 Docstring from scripts:
 
+```
 """
 AutoDraw - inital version 
 
@@ -45,7 +46,7 @@ code completion:
 
     date: 2021.05.04
 """
-
+```
 ---
 
 Modules 
