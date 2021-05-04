@@ -8,14 +8,14 @@ Austin Nguyen (Jun 1, 2020)
 
 
 Because code was uncomplete and splited in few parts so I put all code in one file (`main-original.py`), 
-and add needed modules and missing functions (to load and display image) and it seems it works.
+and add needed imports and missing functions (to load and display image) and it seems it works.
 
 Next I created version `main.py` with some modifications.
 
 I added two modifications:
 
 - when `PyAutoGUI` controls mouse to draw image then it is almost impossible to stop script - so I add `pynput.keyboard.Listener` to listen keyboard and stop code on `ESC`
-- because I have two monitors so it was drawing in wrong place - between monitors - so I added option to set scree size manually `AutoDraw(...., screen_size=(width, height))`
+- because I have two monitors so it was drawing in wrong place - between monitors - so I added option to set screen size manually `AutoDraw(...., screen_size=(width, height))`
 
 I tested it with `GIMP` on Linux. It can work with any program because it only control mouse to press/release mouse button and move mouse in new place.
 You have to manually open painting program, select colors (when script ask for it and shows color values).
@@ -66,7 +66,7 @@ Original Image
 
 ![](https://github.com/furas/AutoDraw/raw/main/original-image-1a.png)
 
-AutoDraw + GIMP using small brush (3px)
+AutoDraw + GIMP using small brush (3px) (Linux Mint, original size 1920x1200 - just click image)
 
 ![](https://github.com/furas/AutoDraw/raw/main/autodraw-image-1a.png)
 
