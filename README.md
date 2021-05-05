@@ -2,9 +2,9 @@
 
 It is code from 
 
-[How I Used Machine Learning to Automatically Hand-Draw Any Picture](https://towardsdatascience.com/how-i-used-machine-learning-to-automatically-hand-draw-any-picture-7d024d0de997)  
-Supervised and unsupervised learning made easy!   
-Austin Nguyen (Jun 1, 2020)  
+> [How I Used Machine Learning to Automatically Hand-Draw Any Picture](https://towardsdatascience.com/how-i-used-machine-learning-to-automatically-hand-draw-any-picture-7d024d0de997)  
+> Supervised and unsupervised learning made easy!   
+> Austin Nguyen (Jun 1, 2020)  
 
 
 Because code was uncomplete and splited in few parts so I put all code in one file (`main-original.py`), 
