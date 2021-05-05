@@ -349,7 +349,7 @@ class AutoDraw(object):
         
 if __name__ == '__main__':        
     image = '/home/furas/test/lenna.png'
-    image = 'example1a.png'
+    image = 'autodraw-image-1a.png'
 
     ad = AutoDraw(image, screen_size=(1920,1200))
     ad.run()
