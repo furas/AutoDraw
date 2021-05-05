@@ -38,7 +38,7 @@ Tested:
     - GIMP 2.10 (fullscreen, hidden toolbars, etc)
     - computer with two monitors
     - Linux Mint 20.1 (MATE)
-    - Python 3.8.x
+    - Python 3.8.5
 
 # pip install opencv-python
 # pip install numpy
@@ -56,10 +56,43 @@ from collections import defaultdict
 import operator
 import time
 
+# --- colors for Linux terminal ---
+
+# https://misc.flogisoft.com/bash/tip_colors_and_formatting
+
+PRINT_COLORS = True
+
+if PRINT_COLORS:
+    C0 = '\033[1;30m'   # color gray/black
+    CR = '\033[1;31m'   # color red
+    CG = '\033[1;32m'   # color green
+    CY = '\033[1;33m'   # color yellow
+    CB = '\033[1;34m'   # color blue
+    CM = '\033[1;35m'   # color magenta
+    CC = '\033[1;36m'   # color cyan
+    CW = '\033[1;37m'   # color white
+    #BR = '\033[1;41m'   # background color red
+    CX = '\033[m'       # reset colors
+else:
+    C0 = ''   # color gray/black
+    CR = ''   # color red
+    CG = ''   # color green
+    CY = ''   # color yellow
+    CB = ''   # color blue
+    CM = ''   # color magenta
+    CC = ''   # color cyan
+    CW = ''   # color white
+    CX = ''   # reset colors
+
+print(f'{CY}[DEBUG]{CX} colors: {C0}C0{CR}CR{CG}CG{CB}CB{CY}CY{CM}CM{CC}CC{CW}CW{CX}')
+
+# --- 
+
+
 class AutoDraw(object):
 
     def __init__(self, name, blur=0, screen_size=None):
-        print('[DEBUG] __init__')
+        print(f'{CY}[DEBUG]{CX} __init__')
 
         # Tunable parameters
         self.detail = 1
@@ -74,20 +107,20 @@ class AutoDraw(object):
         self.blur = blur
         self.img = np.swapaxes(self.img, 0, 1)
         self.img_shape = self.img.shape
-        print('[DEBUG] img.shape:', self.img.shape)
+        print(f'{CY}[DEBUG]{CX} img.shape:', self.img.shape)
         
         self.dim = pg.size()
-        print('[DEBUG] dim = pg.size():', self.dim)
+        print(f'{CY}[DEBUG]{CX} dim = pg.size():', self.dim)
         if screen_size:
             self.dim = screen_size
-            print('[DEBUG] dim = screen_size:', self.dim)
+            print(f'{CY}[DEBUG]{CX} dim = screen_size:', self.dim)
         
         # Scale to draw inside part of screen
-        self.startX = ((1 - self.scale) / 2)*self.dim[0]
-        self.startY = ((1 - self.scale) / 2)*self.dim[1]
+        self.startX = int(((1 - self.scale) / 2)*self.dim[0])
+        self.startY = int(((1 - self.scale) / 2)*self.dim[1])
         self.dim = (self.dim[0] * self.scale, self.dim[1] * self.scale)
-        print('[DEBUG] startX, StartY:', self.startX, self.startY)
-        print('[DEBUG] dim (scale):', self.dim, self.scale)
+        print(f'{CY}[DEBUG]{CX} startX, startY:', self.startX, self.startY)
+        print(f'{CY}[DEBUG]{CX} dim (scale):', self.dim, self.scale)
 
         # fit the picture into this section of the screen
         if self.img_shape[1] > self.img_shape[0]:   # furas change `>`  into `<
@@ -96,13 +129,13 @@ class AutoDraw(object):
         else:
             # if it's wider than it is tall, truncate the tall section
             self.dim = (self.dim[0], int(self.dim[0] *(self.img_shape[1] / self.img_shape[0])))
-        print('[DEBUG] dim:', self.dim)
+        print(f'{CY}[DEBUG]{CX} dim:', self.dim)
 
         # Get dimension to translate picture. Dimension 1 and 0 are switched due to comp dimensions
         ratio = self.img.shape[0] / self.img.shape[1]
         pseudo_x = int(self.img.shape[1] * self.detail)
         self.pseudoDim = (pseudo_x, int(pseudo_x * ratio))
-        print('[DEBUG] pseudoDim:', self.pseudoDim)
+        print(f'{CY}[DEBUG]{CX} pseudoDim:', self.pseudoDim)
 
           # Initialize directions for momentum when creating path
         self.maps = {0: (1, 1), 1: (1, 0), 2: (1, -1), 3: (0, -1), 4: (0, 1), 5: (-1, -1), 6: (-1, 0), 7: (-1, 1)}
@@ -115,13 +148,13 @@ class AutoDraw(object):
         self.show()
 
     def load_img(self, name):
-        print('[DEBUG] load_img')
+        print(f'{CY}[DEBUG]{CX} load_img')
 
         image = cv2.imread(name)
         return image
 
     def show(self):
-        print('[DEBUG] show')
+        print(f'{CY}[DEBUG]{CX} show')
 
         cv2.imshow('image', self.img)
         cv2.waitKey(0)
@@ -129,29 +162,29 @@ class AutoDraw(object):
         cv2.destroyAllWindows()
 
     def rescale(self, img, dim):
-        print('[DEBUG] rescale')
+        print(f'{CY}[DEBUG]{CX} rescale')
 
         resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
         return resized
 
     def translate(self, coord):
-        #print('[DEBUG] translate')
+        #print(f'{CY}[DEBUG]{CX} translate')
 
         ratio = (coord[0] / self.pseudoDim[1], coord[1] / self.pseudoDim[0]) # this is correct
         deltas = (int(ratio[0] * self.dim[0]), int(ratio[1] * self.dim[1]))
 
-        #print('[DEBUG] coord:', coord)
-        #print('[DEBUG] pseudoDim:', self.pseudoDim)
-        #print('[DEBUG] ratio:', ratio)
-        #print('[DEBUG] deltas:', deltas)
-        #print('[DEBUG] startX, startY:', self.startX, self.startY)
+        #print(f'{CY}[DEBUG]{CX} coord:', coord)
+        #print(f'{CY}[DEBUG]{CX} pseudoDim:', self.pseudoDim)
+        #print(f'{CY}[DEBUG]{CX} ratio:', ratio)
+        #print(f'{CY}[DEBUG]{CX} deltas:', deltas)
+        #print(f'{CY}[DEBUG]{CX} startX, startY:', self.startX, self.startY)
         
-        print('[DEBUG] translate', coord, '->', self.startX + deltas[0], self.startY + deltas[1])
+        #print(f'{CY}[DEBUG]{CX} translate', coord, '->', self.startX + deltas[0], self.startY + deltas[1])
         
         return self.startX + deltas[0], self.startY + deltas[1]
 
     def process_img(self, img):
-        print('[DEBUG] process_img')
+        print(f'{CY}[DEBUG]{CX} process_img')
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if self.blur == 2:
@@ -168,7 +201,7 @@ class AutoDraw(object):
         return res
 
     def execute(self, commands):
-        print('[DEBUG] execute')
+        print(f'{CY}[DEBUG]{CX} execute')
 
         # furas: Listenter to stop drawing on press `ESC`
         from pynput import keyboard
@@ -212,7 +245,7 @@ class AutoDraw(object):
         return
 
     def drawOutline(self):
-        print('[DEBUG] drawOutline')
+        print(f'{CY}[DEBUG]{CX} drawOutline')
 
         indices = np.argwhere(self.drawing < 127).tolist()  # get the black colors
         index_tuples = map(tuple, indices)
@@ -224,20 +257,20 @@ class AutoDraw(object):
         point = self.translate(self.curr_pos)
         self.commands.append(point)
 
-        print('Please change pen to thin and color to black.')
-        input("Press enter once ready")
+        print(f'Change: pen to THIN (small), color to BLACK.')
+        input(f"Press {CG}ENTER{CX} once ready")
         print('')
 
         # DRAW THE BLACK OUTLINE
         self.createPath()
-        input("Ready! Press Enter to draw")
-        print('5 seconds until drawing beings')
+        input(f"Ready! Press {CG}ENTER{CX} to draw")
+        print(f'{CY}5 seconds until drawing beings{CX}')
         time.sleep(5)
 
         self.execute(self.commands)
 
     def createPath(self):
-        print('[DEBUG] createPath')
+        print(f'{CY}[DEBUG]{CX} createPath')
 
         # check for closest point. Go there. Add click down. Change curr. Remove from set and tree. Then, begin
         new_pos = tuple(self.KDTree.search_nn(self.curr_pos)[0].data)
@@ -247,6 +280,8 @@ class AutoDraw(object):
         self.KDTree = self.KDTree.remove(list(new_pos))
         self.hashSet.remove(new_pos)
 
+        hashset_size = len(self.hashSet)
+        
         while len(self.hashSet) > 0:
             prev_direction = self.momentum
             candidate = self.checkMomentum(self.curr_pos)
@@ -265,15 +300,16 @@ class AutoDraw(object):
             self.curr_pos = new
             self.KDTree = self.KDTree.remove(list(new))
             self.hashSet.remove(new)
-            print('Making path...number points left: ', len(self.hashSet))
+            print('Making path... number points left: ', len(self.hashSet), '/', hashset_size, '          ', end='\r')
+        print()            
         return
 
     def isValid(self, delta):
-        #print('[DEBUG] isValid')
+        #print(f'{CY}[DEBUG]{CX} isValid')
         return len(delta) == 2
 
     def checkMomentum(self, point):
-        #print('[DEBUG] checkMomentum')
+        #print(f'{CY}[DEBUG]{CX} checkMomentum')
 
         # Returns best next relative move w.r.t. momentum and if in hashset
         self.curr_delta = self.maps[self.momentum]
@@ -287,28 +323,30 @@ class AutoDraw(object):
         return [-1]
 
     def checkDirection(self, element):
-        #print('[DEBUG] checkDirection')
+        #print(f'{CY}[DEBUG]{CX} checkDirection')
 
         return self.dot(self.curr_delta, element)
 
     def dot(self, pt1, pt2):
-        #print('[DEBUG] dot')
+        #print(f'{CY}[DEBUG]{CX} dot')
 
         pt1 = self.unit(pt1)
         pt2 = self.unit(pt2)
         return pt1[0] * pt2[0] + pt1[1] * pt2[1]
 
     def unit(self, point):
-        #print('[DEBUG] unit')
+        #print(f'{CY}[DEBUG]{CX} unit')
 
         norm = (point[0] ** 2 + point[1] ** 2)
         norm = np.sqrt(norm)
         return point[0] / norm, point[1] / norm
 
     def run(self):
-        print('[DEBUG] run')
+        print(f'{CY}[DEBUG]{CX} run')
 
         if self.with_color:
+            print('Counting colors ...')
+
             color = self.rescale(self.img, self.pseudoDim)
             collapsed = np.sum(color, axis=2)/3
             fill = np.argwhere(collapsed < 230)  # color 2-d indices
@@ -323,9 +361,12 @@ class AutoDraw(object):
             for i, j in zip(labels, fill):
                 label_2_index[i].append(j)
 
+            print('Number of colors:', len(colors))
+            
             for (i, color) in enumerate(colors):
-                print('Please change the pen to thick and color to BGR (not RGB) values: ', color)
-                input("Press enter once ready")
+                B, G, R = map(int, color)
+                print(f'Change: pen to THICK (big), color to RGB values: R: {CR}{R}{CX} G: {CG}{G}{CX}, B: {CB}{B}{CX} (hex: #{CR}{R:02X}{CG}{G:02X}{CB}{B:02X}{CX})')
+                input(f"Press {CG}ENTER{CX} once ready")
                 print('')
 
                 points = label_2_index[i]
@@ -339,8 +380,8 @@ class AutoDraw(object):
                 self.commands.append("UP")
                 self.createPath()
 
-                input('Ready! Press enter to draw: ')
-                print('5 seconds until drawing begins...')
+                input(f'{CR}Ready!{CX} Press {CG}ENTER{CX} to draw')
+                print(f'{CY}5 seconds until drawing begins...{CX}')
                 time.sleep(5)
 
                 self.execute(self.commands)
