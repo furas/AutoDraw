@@ -17,11 +17,13 @@ I added two modifications:
 - when `PyAutoGUI` controls mouse to draw image then it is almost impossible to stop script - so I add `pynput.keyboard.Listener` to listen keyboard and stop code on `ESC`
 - because I have two monitors so it was drawing in wrong place - between monitors - so I added option to set screen size manually `AutoDraw(...., screen_size=(width, height))`
 
-I tested it with `GIMP` on Linux. It can work with any program because it only control mouse to press/release mouse button and move mouse in new place.
-You have to manually open painting program, select colors (when script ask for it and shows color values).
+See: [CHANGELOG](CHANGELOG.md)
 
+---
+
+I tested it with `GIMP` on Linux. It can work with any program because it only control mouse to press/release mouse button and move mouse in new place.  
+You have to manually open painting program, select colors (when script ask for it and shows color values).  
 This color is in `BGR` (Blue, Green, Red), not `RGB` (Red, Green, Blue), (because `cv2` uses `BRG`) so you have to remember to copy values in correct order.
-
 
 ---
 
