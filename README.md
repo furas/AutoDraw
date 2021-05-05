@@ -70,3 +70,6 @@ AutoDraw + GIMP using small brush (3px) (Linux Mint, original size 1920x1200 - j
 
 ![](https://github.com/furas/AutoDraw/raw/main/autodraw-image-1a.png)
 
+---
+
+See: [CHANGELOG](CHANGELOG.md)
