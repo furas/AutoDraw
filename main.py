@@ -36,6 +36,7 @@ Tested:
 # pip install PyAutoGUI
 # pip install sklearn
 # pip install kdtree
+# pip install pynput
 # pip install colorama
 """
 
@@ -47,6 +48,7 @@ from kdtree import create
 from collections import defaultdict
 import operator
 import time
+from pynput import keyboard
 from colorama import Fore as FG, Back as BG, Style as ST
 
 # --- functions ---
@@ -87,7 +89,7 @@ debug(f'colors: {C0}C0{CR}CR{CG}CG{CB}CB{FG.YELLOW}CY{CM}CM{CC}CC{CW}CW{CX}')
 
 class AutoDraw(object):
 
-    def __init__(self, name, blur=0, screen_size=None, 
+    def __init__(self, filename, blur=0, screen_size=None, 
                  start_x=None, start_y=None, detail=1, scale=7/12, 
                  sketch_before=False, with_color=True, num_colors=10, outline_again=False):
     
@@ -102,7 +104,7 @@ class AutoDraw(object):
         self.outline_again = outline_again
 
         # Load Image. Switch axes to match computer screen
-        self.img = self.load_img(name)
+        self.img = self.load_img(filename)
         self.blur = blur
         self.img = np.swapaxes(self.img, 0, 1)
         self.img_shape = self.img.shape
@@ -110,6 +112,7 @@ class AutoDraw(object):
         
         self.dim = pg.size()
         debug('[__init__] dim = pg.size():', self.dim)
+        
         if screen_size:
             self.dim = screen_size
             debug('[__init__] dim = screen_size:', self.dim)
@@ -208,10 +211,9 @@ class AutoDraw(object):
         return res
 
     def execute(self, commands):
-        debug('[execute]', commands)
+        debug('[execute]')#, commands)
 
         # furas: Listenter to stop drawing on press `ESC`
-        from pynput import keyboard
 
         global running
     
@@ -224,27 +226,27 @@ class AutoDraw(object):
                 # Stop listener
                 return False
             
-        running = True
+        running = True  # `Listener` uses it to stop loop with `commands`
         
         # furas: Listenter to stop drawing on press `ESC`
         with keyboard.Listener(on_release=on_release) as listener:
        
-            press = 0  # flag indicating whether we are putting pressure on paper
+            press = False  # flag indicating whether we are putting pressure on paper
 
-            for (i, comm) in enumerate(commands):
+            for cmd in commands:
                 if not running:
                     break
                     
-                if type(comm) == str:
-                    if comm == 'UP':
-                        press = 0
-                    if comm == 'DOWN':
-                        press = 1
+                if isinstance(cmd, str):
+                    if cmd == 'UP':
+                        press = False
+                    if cmd == 'DOWN':
+                        press = True
                 else:
-                    if press == 0:
-                        pg.moveTo(comm[0], comm[1], 0)
+                    if press is False:
+                        pg.moveTo(cmd[0], cmd[1], 0)
                     else:
-                        pg.dragTo(comm[0], comm[1], 0)
+                        pg.dragTo(cmd[0], cmd[1], 0)
                     
             listener.stop()
             listener.join()
@@ -281,6 +283,7 @@ class AutoDraw(object):
 
         # check for closest point. Go there. Add click down. Change curr. Remove from set and tree. Then, begin
         new_pos = tuple(self.KDTree.search_nn(self.curr_pos)[0].data)
+        
         self.commands.append(new_pos)
         self.commands.append("DOWN")
         self.curr_pos = new_pos
@@ -396,7 +399,7 @@ class AutoDraw(object):
             self.drawOutline()
         
 if __name__ == '__main__':        
-    image = '/home/furas/test/lenna.png'
+    #image = 'lenna.png'
     image = 'autodraw-image-1a.png'
 
     try:

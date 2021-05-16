@@ -1,8 +1,14 @@
 ### date: 2021.05.16
     
 - add other options in __init__ (with default values): 
-    start_x=None, start_y=None, detail=1, scale=7/12, 
-    sketch_before=False, with_color=True, num_colors=10, outline_again
+    start_x=None, 
+    start_y=None, 
+    detail=1, 
+    scale=7/12, 
+    sketch_before=False, 
+    with_color=True, 
+    num_colors=10, 
+    outline_again=False,
 - use `colorama` for colors (to make sure it will work on all systems)
 
 
