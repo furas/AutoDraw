@@ -20,17 +20,8 @@ Code completion:
     
 Changes:    
 
-    date: 2021.05.04
-
-    - debug messages
-    - added pynput.keyboard.Listener to stop drawing on press ESC (when PyAutoGUI moves mouse in wrong place)
-    - add doption to set screen size manually (when there are two monitors)
-    
-Suggestions:
-
-    - add colors in messages - to better recognize when it ask to press Enter`
-    - display color value as RGB instead of BGR, and as hex code - to simper copy it to painting program
-    
+    see file CHANGELOG.md
+     
 Tested:
 
     date: 2021.05.04
@@ -45,6 +36,7 @@ Tested:
 # pip install PyAutoGUI
 # pip install sklearn
 # pip install kdtree
+# pip install colorama
 """
 
 import cv2
@@ -55,6 +47,12 @@ from kdtree import create
 from collections import defaultdict
 import operator
 import time
+from colorama import Fore as FG, Back as BG, Style as ST
+
+# --- functions ---
+
+def debug(*args):
+    print(f'{CY}[DEBUG]{CX}', *args)
 
 # --- colors for Linux terminal ---
 
@@ -63,16 +61,15 @@ import time
 PRINT_COLORS = True
 
 if PRINT_COLORS:
-    C0 = '\033[1;30m'   # color gray/black
-    CR = '\033[1;31m'   # color red
-    CG = '\033[1;32m'   # color green
-    CY = '\033[1;33m'   # color yellow
-    CB = '\033[1;34m'   # color blue
-    CM = '\033[1;35m'   # color magenta
-    CC = '\033[1;36m'   # color cyan
-    CW = '\033[1;37m'   # color white
-    #BR = '\033[1;41m'   # background color red
-    CX = '\033[m'       # reset colors
+    C0 = FG.BLACK   + ST.BRIGHT   # color gray/black
+    CR = FG.RED     + ST.BRIGHT   # color red
+    CG = FG.GREEN   + ST.BRIGHT   # color green
+    CY = FG.YELLOW  + ST.BRIGHT   # color yellow
+    CB = FG.BLUE    + ST.BRIGHT   # color blue
+    CM = FG.MAGENTA + ST.BRIGHT   # color magenta
+    CC = FG.CYAN    + ST.BRIGHT   # color cyan
+    CW = FG.WHITE   + ST.BRIGHT   # color white
+    CX = ST.RESET_ALL             # reset colors
 else:
     C0 = ''   # color gray/black
     CR = ''   # color red
@@ -84,43 +81,53 @@ else:
     CW = ''   # color white
     CX = ''   # reset colors
 
-print(f'{CY}[DEBUG]{CX} colors: {C0}C0{CR}CR{CG}CG{CB}CB{CY}CY{CM}CM{CC}CC{CW}CW{CX}')
+debug(f'colors: {C0}C0{CR}CR{CG}CG{CB}CB{FG.YELLOW}CY{CM}CM{CC}CC{CW}CW{CX}')
 
 # --- 
 
-
 class AutoDraw(object):
 
-    def __init__(self, name, blur=0, screen_size=None):
-        print(f'{CY}[DEBUG]{CX} __init__')
+    def __init__(self, name, blur=0, screen_size=None, 
+                 start_x=None, start_y=None, detail=1, scale=7/12, 
+                 sketch_before=False, with_color=True, num_colors=10, outline_again=False):
+    
+        debug('AutoDraw.__init__')
 
         # Tunable parameters
-        self.detail = 1
-        self.scale = 7/12
-        self.sketch_before = False
-        self.with_color = True
-        self.num_colors = 10
-        self.outline_again = False
+        self.detail = detail
+        self.scale = scale
+        self.sketch_before = sketch_before
+        self.with_color = with_color
+        self.num_colors = num_colors
+        self.outline_again = outline_again
 
         # Load Image. Switch axes to match computer screen
         self.img = self.load_img(name)
         self.blur = blur
         self.img = np.swapaxes(self.img, 0, 1)
         self.img_shape = self.img.shape
-        print(f'{CY}[DEBUG]{CX} img.shape:', self.img.shape)
+        debug('[__init__] img.shape:', self.img.shape)
         
         self.dim = pg.size()
-        print(f'{CY}[DEBUG]{CX} dim = pg.size():', self.dim)
+        debug('[__init__] dim = pg.size():', self.dim)
         if screen_size:
             self.dim = screen_size
-            print(f'{CY}[DEBUG]{CX} dim = screen_size:', self.dim)
+            debug('[__init__] dim = screen_size:', self.dim)
         
         # Scale to draw inside part of screen
-        self.startX = int(((1 - self.scale) / 2)*self.dim[0])
-        self.startY = int(((1 - self.scale) / 2)*self.dim[1])
+        if start_x:
+            self.startX = start_x
+        else:            
+            self.startX = int(((1 - self.scale) / 2)*self.dim[0])
+        
+        if start_y:
+            self.startY = start_y        
+        else:
+            self.startY = int(((1 - self.scale) / 2)*self.dim[1])
+            
         self.dim = (self.dim[0] * self.scale, self.dim[1] * self.scale)
-        print(f'{CY}[DEBUG]{CX} startX, startY:', self.startX, self.startY)
-        print(f'{CY}[DEBUG]{CX} dim (scale):', self.dim, self.scale)
+        debug('[__init__] startX, startY:', self.startX, self.startY)
+        debug('[__init__] dim (scale):', self.dim, self.scale)
 
         # fit the picture into this section of the screen
         if self.img_shape[1] > self.img_shape[0]:   # furas change `>`  into `<
@@ -129,13 +136,13 @@ class AutoDraw(object):
         else:
             # if it's wider than it is tall, truncate the tall section
             self.dim = (self.dim[0], int(self.dim[0] *(self.img_shape[1] / self.img_shape[0])))
-        print(f'{CY}[DEBUG]{CX} dim:', self.dim)
+        debug('[__init__] dim:', self.dim)
 
         # Get dimension to translate picture. Dimension 1 and 0 are switched due to comp dimensions
         ratio = self.img.shape[0] / self.img.shape[1]
         pseudo_x = int(self.img.shape[1] * self.detail)
         self.pseudoDim = (pseudo_x, int(pseudo_x * ratio))
-        print(f'{CY}[DEBUG]{CX} pseudoDim:', self.pseudoDim)
+        debug('[__init__] pseudoDim:', self.pseudoDim)
 
           # Initialize directions for momentum when creating path
         self.maps = {0: (1, 1), 1: (1, 0), 2: (1, -1), 3: (0, -1), 4: (0, 1), 5: (-1, -1), 6: (-1, 0), 7: (-1, 1)}
@@ -148,13 +155,13 @@ class AutoDraw(object):
         self.show()
 
     def load_img(self, name):
-        print(f'{CY}[DEBUG]{CX} load_img')
+        debug('[load_img]', name)
 
         image = cv2.imread(name)
         return image
 
     def show(self):
-        print(f'{CY}[DEBUG]{CX} show')
+        debug('[show]')
 
         cv2.imshow('image', self.img)
         cv2.waitKey(0)
@@ -162,29 +169,29 @@ class AutoDraw(object):
         cv2.destroyAllWindows()
 
     def rescale(self, img, dim):
-        print(f'{CY}[DEBUG]{CX} rescale')
+        debug('[rescale]', dim)
 
         resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
         return resized
 
     def translate(self, coord):
-        #print(f'{CY}[DEBUG]{CX} translate')
+        #debug('translate')
 
         ratio = (coord[0] / self.pseudoDim[1], coord[1] / self.pseudoDim[0]) # this is correct
         deltas = (int(ratio[0] * self.dim[0]), int(ratio[1] * self.dim[1]))
 
-        #print(f'{CY}[DEBUG]{CX} coord:', coord)
-        #print(f'{CY}[DEBUG]{CX} pseudoDim:', self.pseudoDim)
-        #print(f'{CY}[DEBUG]{CX} ratio:', ratio)
-        #print(f'{CY}[DEBUG]{CX} deltas:', deltas)
-        #print(f'{CY}[DEBUG]{CX} startX, startY:', self.startX, self.startY)
+        #debug('coord:', coord)
+        #debug('pseudoDim:', self.pseudoDim)
+        #debug('ratio:', ratio)
+        #debug('deltas:', deltas)
+        #debug('startX, startY:', self.startX, self.startY)
         
-        #print(f'{CY}[DEBUG]{CX} translate', coord, '->', self.startX + deltas[0], self.startY + deltas[1])
+        #debug('translate', coord, '->', self.startX + deltas[0], self.startY + deltas[1])
         
         return self.startX + deltas[0], self.startY + deltas[1]
 
     def process_img(self, img):
-        print(f'{CY}[DEBUG]{CX} process_img')
+        debug('[process_img]')
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if self.blur == 2:
@@ -201,7 +208,7 @@ class AutoDraw(object):
         return res
 
     def execute(self, commands):
-        print(f'{CY}[DEBUG]{CX} execute')
+        debug('[execute]', commands)
 
         # furas: Listenter to stop drawing on press `ESC`
         from pynput import keyboard
@@ -245,7 +252,7 @@ class AutoDraw(object):
         return
 
     def drawOutline(self):
-        print(f'{CY}[DEBUG]{CX} drawOutline')
+        debug('[drawOutline]')
 
         indices = np.argwhere(self.drawing < 127).tolist()  # get the black colors
         index_tuples = map(tuple, indices)
@@ -257,7 +264,7 @@ class AutoDraw(object):
         point = self.translate(self.curr_pos)
         self.commands.append(point)
 
-        print(f'Change: pen to THIN (small), color to BLACK.')
+        print(f'Change: pen to {CY}THIN{CX} (small), color to {CY}BLACK{CX}.')
         input(f"Press {CG}ENTER{CX} once ready")
         print('')
 
@@ -270,7 +277,7 @@ class AutoDraw(object):
         self.execute(self.commands)
 
     def createPath(self):
-        print(f'{CY}[DEBUG]{CX} createPath')
+        debug('[createPath]')
 
         # check for closest point. Go there. Add click down. Change curr. Remove from set and tree. Then, begin
         new_pos = tuple(self.KDTree.search_nn(self.curr_pos)[0].data)
@@ -305,11 +312,11 @@ class AutoDraw(object):
         return
 
     def isValid(self, delta):
-        #print(f'{CY}[DEBUG]{CX} isValid')
+        #debug('[isValid]')
         return len(delta) == 2
 
     def checkMomentum(self, point):
-        #print(f'{CY}[DEBUG]{CX} checkMomentum')
+        #debug('[checkMomentum]')
 
         # Returns best next relative move w.r.t. momentum and if in hashset
         self.curr_delta = self.maps[self.momentum]
@@ -323,26 +330,26 @@ class AutoDraw(object):
         return [-1]
 
     def checkDirection(self, element):
-        #print(f'{CY}[DEBUG]{CX} checkDirection')
+        #debug('[checkDirection]')
 
         return self.dot(self.curr_delta, element)
 
     def dot(self, pt1, pt2):
-        #print(f'{CY}[DEBUG]{CX} dot')
+        #debug('[dot]')
 
         pt1 = self.unit(pt1)
         pt2 = self.unit(pt2)
         return pt1[0] * pt2[0] + pt1[1] * pt2[1]
 
     def unit(self, point):
-        #print(f'{CY}[DEBUG]{CX} unit')
+        #debug('[unit]')
 
         norm = (point[0] ** 2 + point[1] ** 2)
         norm = np.sqrt(norm)
         return point[0] / norm, point[1] / norm
 
     def run(self):
-        print(f'{CY}[DEBUG]{CX} run')
+        debug('[run]')
 
         if self.with_color:
             print('Counting colors ...')
@@ -365,8 +372,8 @@ class AutoDraw(object):
             
             for (i, color) in enumerate(colors):
                 B, G, R = map(int, color)
-                print(f'Change: pen to THICK (big), color to RGB values: R: {CR}{R}{CX} G: {CG}{G}{CX}, B: {CB}{B}{CX} (hex: #{CR}{R:02X}{CG}{G:02X}{CB}{B:02X}{CX})')
-                input(f"Press {CG}ENTER{CX} once ready")
+                print(f'Change pen to {CY}THICK{CX} (big), color to {CY}RGB{CX} values: R: {CR}{R}{CX} G: {CG}{G}{CX}, B: {CB}{B}{CX} (hex: #{CR}{R:02X}{CG}{G:02X}{CB}{B:02X}{CX})')
+                input(f"\nPress {CG}ENTER{CX} once ready")
                 print('')
 
                 points = label_2_index[i]
@@ -380,8 +387,8 @@ class AutoDraw(object):
                 self.commands.append("UP")
                 self.createPath()
 
-                input(f'{CR}Ready!{CX} Press {CG}ENTER{CX} to draw')
-                print(f'{CY}5 seconds until drawing begins...{CX}')
+                input(f'\n{CR}Ready!{CX} Press {CG}ENTER{CX} to draw')
+                print(f'\n{CY}5 seconds until drawing begins...{CX}\n')
                 time.sleep(5)
 
                 self.execute(self.commands)
@@ -392,5 +399,9 @@ if __name__ == '__main__':
     image = '/home/furas/test/lenna.png'
     image = 'autodraw-image-1a.png'
 
-    ad = AutoDraw(image, screen_size=(1920,1200))
-    ad.run()
+    try:
+        ad = AutoDraw(image, screen_size=(1920,1200))
+        ad.run()
+    except KeyboardInterrupt:
+        print(f'\nStopped by {CY}Ctrl+C{CX}')
+

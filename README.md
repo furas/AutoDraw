@@ -7,6 +7,7 @@ It is code from
 > Austin Nguyen (Jun 1, 2020)  
 
 
+
 Because code was uncomplete and splited in few parts so I put all code in one file (`main-original.py`), 
 and add needed imports and missing functions (to load and display image) and it seems it works.
 
